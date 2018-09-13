@@ -17,6 +17,7 @@ In order to test the EKF implementation, six scenarios were given as follows:
 
 For the controls project, the simulator was working with a perfect set of sensors, meaning none of the sensors had any noise.  The first step to adding additional realism to the problem, and developing an estimator, is adding noise to the quad's sensors.  For the first step, students had to collect some simulated noisy sensor data and estimate the standard deviation of the quad's sensor.
 
+
 ``` 
 Success criteria : Your standard deviations should accurately capture the value of approximately 68% of the respective  measurements.
 ```
@@ -28,6 +29,30 @@ The output:
 Simulation #3 (../config/06_SensorNoise.txt)
 FAIL: ABS(Quad.GPS.X-Quad.Pos.X) was less than MeasuredStdDev_GPSPosXY for 50% of the time
 FAIL: ABS(Quad.IMU.AX-0.000000) was less than MeasuredStdDev_AccelXY for 63% of the time
+```
+
+
+## Corrections:
+
+```
+9/13/2018 
+
+```
+### log files of sensor measuremenst were save as Scenario6-IMU-Accel_x.txt and Scenario6-Quad-GPS_x.txt in ../config/log folder. An addittional section was added to *main.cpp* lines 123 - 160 [/main.cpp](./main.cpp#L123-L160) to read data from the log files and a newly implemnted function *calculateSTD* [/main.cpp](./main.cpp#L78-L99) was called to calculate the standard deviations and printed out on the output window as shown below: ###
+
+![Noisy sensors measurements stds](./images/stds.png)
+
+### In the next step, the calculated standard deviations were added to the scenario config file [/config/06_SensorNoise.txt(./config/06_SensorNoise.txt).
+
+![Scenario 6 simulation passed](./images/scenario6-corrected-sim.png)
+
+![Scenario 6 output passed](./images/scenario6-corrected-out-passed.png)
+
+
+
+```
+9/13/2018 
+End of Corrections 
 ```
 
 
