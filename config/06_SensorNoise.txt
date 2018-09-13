@@ -1,7 +1,10 @@
 ### STUDENT SECTION
 
-MeasuredStdDev_GPSPosXY = 2
-MeasuredStdDev_AccelXY = .1
+MeasuredStdDev_GPSPosXY = 0.709179
+# 0.709179 found from the additional c++ code 
+MeasuredStdDev_AccelXY = 0.487343
+# 0.487343 found from the additional c++ code 
+
 
 ### END STUDENT SECTION
 
@@ -11,7 +14,7 @@ INCLUDE SimulatedSensors.txt
 INCLUDE QuadControlParams.txt
 
 # simulation setup
-Sim.RunMode = Repeat
+Sim.RunMode = Repeat 
 Sim.EndTime = 10
 Sim.Vehicle1 = Quad
 
