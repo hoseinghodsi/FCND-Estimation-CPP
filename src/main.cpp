@@ -11,8 +11,10 @@
 #include "MavlinkNode/MavlinkTranslation.h"
 #include "Simulation/SimulatedGPS.h"
 
+
 using SLR::Quaternion;
 using SLR::ToUpper;
+using namespace std;
 
 void KeyboardInteraction(V3F& force, shared_ptr<Visualizer_GLUT> vis);
 bool receivedResetRequest = true;
@@ -45,33 +47,56 @@ shared_ptr<MavlinkNode> mlNode;
 
 int main(int argcp, char **argv)
 {
-  PrintHelpText();
- 
-  // load parameters
-  ParamsHandle config = SimpleConfig::GetInstance();
+	PrintHelpText();
 
-  // initialize visualizer
-  visualizer.reset(new Visualizer_GLUT(&argcp, argv));
-  grapher.reset(new GraphManager(false));
+	// load parameters
+	ParamsHandle config = SimpleConfig::GetInstance();
 
-  // re-load last opened scenario
-  FILE *f = fopen("../config/LastScenario.txt", "r");
-  if (f)
-  {
-    char buf[100]; buf[99] = 0;
-    fgets(buf, 99, f);
-    _scenarioFile = SLR::Trim(buf);
-    fclose(f);
-  }
+	// initialize visualizer
+	visualizer.reset(new Visualizer_GLUT(&argcp, argv));
+	grapher.reset(new GraphManager(false));
 
-  LoadScenario(_scenarioFile);
- 
+	// re-load last opened scenario
+	FILE *f = fopen("../config/LastScenario.txt", "r");
+	if (f)
+	{
+		char buf[100]; buf[99] = 0;
+		fgets(buf, 99, f);
+		_scenarioFile = SLR::Trim(buf);
+		fclose(f);
+	}
+
+	LoadScenario(_scenarioFile);
+
   glutTimerFunc(1,&OnTimer,0);
   
   glutMainLoop();
 
   return 0;
 }
+
+/// ############################################################
+/// Calculate the standard deviation of a vector
+
+float calculate_STD(vector<float> &data) {
+	float sum = 0;
+	vector<float>::iterator iter;
+	for (iter = data.begin(); iter != data.end(); ++iter) {
+		sum += *iter;
+	}
+	float mean = sum / data.size();
+
+	float diff = 0;
+	for (iter = data.begin(); iter != data.end(); ++iter) {
+		diff += (*iter - mean)*(*iter - mean);
+	}
+	float variance = diff / (data.size() - 1);
+	float dataSTD = sqrt(variance);
+
+	return dataSTD;
+}
+
+/// ############################################################
 
 void LoadScenario(string scenarioFile)
 {
@@ -89,10 +114,51 @@ void LoadScenario(string scenarioFile)
   grapher->graph1->RemoveAllElements();
   grapher->graph2->RemoveAllElements();
 
+
   // create a quadcopter to simulate
   quads = CreateVehicles();
 
   ResetSimulation();
+
+  /// ############################################################
+  /// Additional part written to calculate the standard deviation of sensor measurements
+  /// works in with "calculate_STD" function to find the std
+
+  string scenario_flag = "../config/06_SensorNoise.txt";
+  int flag = _scenarioFile.string::compare(scenario_flag);
+  if (flag == 0 ) {
+	  ifstream QuadGPS_x_stream("../config/log/Scenario6-Quad-GPS_x.txt");
+	  ifstream IMU_Accel_x_stream("../config/log/Scenario6-IMU-Accel_x.txt");
+
+	  string str_Quad_IMU_AX, str_Quad_GPS_X, str_time_step;
+	  float read_Quad_IMU_AX, read_Quad_GPS_X;
+	  vector<float> Quad_GPS_X;
+	  vector<float> Quad_IMU_Ax;
+	  string line;
+	  while (getline(QuadGPS_x_stream, line)) {
+		  stringstream ss(line);
+		  getline(ss, str_time_step, ',');
+		  getline(ss, str_Quad_GPS_X, '\n');
+		  read_Quad_GPS_X = strtof(str_Quad_GPS_X.c_str(), NULL);
+		  Quad_GPS_X.push_back(read_Quad_GPS_X);
+	  }
+	  cout << calculate_STD(Quad_GPS_X) << endl;
+
+	  while (getline(IMU_Accel_x_stream, line)) {
+		  stringstream ss(line);
+		  getline(ss, str_time_step, ',');
+		  getline(ss, str_Quad_IMU_AX, '\n');
+		  read_Quad_IMU_AX = strtof(str_Quad_IMU_AX.c_str(), NULL);
+		  Quad_IMU_Ax.push_back(read_Quad_IMU_AX);
+	  }
+	  cout << calculate_STD(Quad_IMU_Ax) << endl;
+
+	  QuadGPS_x_stream.close();
+	  IMU_Accel_x_stream.close();
+  }
+
+  /// #################################################################
+
 
   visualizer->OnLoadScenario(_scenarioFile);
   visualizer->InitializeMenu(grapher->GetGraphableStrings());
